@@ -35,6 +35,10 @@ from app.vectorstore import (
     get_client,
 )
 
+# Upsert points to Qdrant in batches so a single large document does not
+# produce one oversized HTTP request (which would time out).
+_UPSERT_BATCH = 256
+
 
 @dataclass
 class DocumentMeta:
@@ -152,9 +156,12 @@ def ingest_text(content: str, meta: DocumentMeta) -> IngestResult:
             )
             for chunk, vector in zip(doc.chunks, vectors)
         ]
-        client.upsert(
-            collection_name=settings.qdrant_collection, points=points, wait=True
-        )
+        for start in range(0, len(points), _UPSERT_BATCH):
+            client.upsert(
+                collection_name=settings.qdrant_collection,
+                points=points[start : start + _UPSERT_BATCH],
+                wait=True,
+            )
 
         return IngestResult(
             document_id=doc.id,

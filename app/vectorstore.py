@@ -34,7 +34,9 @@ _PAYLOAD_INDEXES: dict[str, qm.PayloadSchemaType] = {
 def get_client() -> QdrantClient:
     """Create a Qdrant client from the configuration."""
     settings = get_settings()
-    return QdrantClient(host=settings.qdrant_host, port=settings.qdrant_port)
+    return QdrantClient(
+        host=settings.qdrant_host, port=settings.qdrant_port, timeout=60
+    )
 
 
 def ensure_collection(client: QdrantClient | None = None) -> None:
