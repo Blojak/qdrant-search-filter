@@ -60,6 +60,15 @@ cp .env.example .env        # adjust if needed (ports, model, chunk size, ...)
 > is mapped to `5433` by default (`POSTGRES_PORT` in `.env`). The first search or
 > ingest downloads the embedding model (~2.2 GB) once.
 
+### pgAdmin (optional database UI)
+
+Compose also starts **pgAdmin** at http://localhost:5050 (`PGADMIN_PORT`). Log in
+with `PGADMIN_DEFAULT_EMAIL` / `PGADMIN_DEFAULT_PASSWORD` (default
+`admin@example.com` / `admin`). The `qsearch` server is pre-registered (via
+`pgadmin/servers.json`); enter the Postgres password (`qsearch`) on first
+connect. Inside the compose network pgAdmin reaches Postgres as host `postgres`
+on port `5432` (not the host-mapped `5433`).
+
 ## Run the API
 
 ```bash
