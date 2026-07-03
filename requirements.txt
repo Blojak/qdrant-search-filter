@@ -1,0 +1,12 @@
+# Core
+qdrant-client==1.12.1
+sqlalchemy==2.0.36
+psycopg2-binary==2.9.10
+pydantic-settings==2.6.1
+Flask==3.1.0
+
+# Embeddings (lokal, mehrsprachig)
+sentence-transformers==3.3.1
+
+# Optionaler einfacher PDF-Text (out of scope fuer Kern-PoC, aber leichtgewichtig)
+pypdf==5.1.0

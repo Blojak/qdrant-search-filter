@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.py[cod]
+.env
+.python-version
+# lokal heruntergeladene HF-Modelle (optional gecacht)
+.cache/

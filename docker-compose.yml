@@ -1,0 +1,34 @@
+services:
+  qdrant:
+    image: qdrant/qdrant:v1.12.4
+    container_name: qsearch_qdrant
+    restart: unless-stopped
+    ports:
+      - "${QDRANT_PORT:-6333}:6333"   # REST/HTTP
+      - "6334:6334"                   # gRPC
+    volumes:
+      - qdrant_data:/qdrant/storage
+    # Kein Container-Healthcheck: Qdrant-Image bringt keine garantierte Shell/curl
+    # mit. Erreichbarkeit wird vom Host gegen den REST-Port geprueft.
+
+  postgres:
+    image: postgres:17
+    container_name: qsearch_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-qsearch}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-qsearch}
+      POSTGRES_DB: ${POSTGRES_DB:-qsearch}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-qsearch} -d ${POSTGRES_DB:-qsearch}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  qdrant_data:
+  postgres_data:
