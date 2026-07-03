@@ -28,6 +28,18 @@ from app.db import Base
 from app.enums import Classification, DocType, Language
 
 
+def _enum_column(enum_cls: type, type_name: str) -> SAEnum:
+    """Erzeugt eine native PG-Enum-Spalte, die die Enum-*Werte* (nicht Namen)
+    persistiert – so ist die Postgres-Repraesentation identisch zum
+    denormalisierten Qdrant-Payload (z. B. ``de`` statt ``DE``)."""
+    return SAEnum(
+        enum_cls,
+        name=type_name,
+        native_enum=True,
+        values_callable=lambda cls: [member.value for member in cls],
+    )
+
+
 class Document(Base):
     """Ein Dokument als Traeger aller Metadaten (Wahrheit in Postgres)."""
 
@@ -50,11 +62,11 @@ class Document(Base):
     # --- deskriptiv ---
     title: Mapped[str | None] = mapped_column(String(512), nullable=True)
     language: Mapped[Language] = mapped_column(
-        SAEnum(Language, name="language_enum", native_enum=True),
+        _enum_column(Language, "language_enum"),
         nullable=False, default=Language.UNKNOWN, index=True,
     )
     doc_type: Mapped[DocType] = mapped_column(
-        SAEnum(DocType, name="doc_type_enum", native_enum=True),
+        _enum_column(DocType, "doc_type_enum"),
         nullable=False, default=DocType.OTHER, index=True,
     )
     created_at: Mapped[datetime | None] = mapped_column(
@@ -64,7 +76,7 @@ class Document(Base):
 
     # --- administrativ ---
     classification: Mapped[Classification] = mapped_column(
-        SAEnum(Classification, name="classification_enum", native_enum=True),
+        _enum_column(Classification, "classification_enum"),
         nullable=False, default=Classification.INTERNAL, index=True,
     )
     source: Mapped[str | None] = mapped_column(String(256), nullable=True)
