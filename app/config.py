@@ -1,8 +1,8 @@
-"""Zentrale Konfiguration via pydantic-settings.
+"""Central configuration via pydantic-settings.
 
-Alle Laufzeitparameter werden aus der Umgebung bzw. der ``.env``-Datei gelesen.
-Kein Wert wird im Code hartkodiert – Aenderungen erfolgen ausschliesslich ueber
-die Umgebung.
+All runtime parameters are read from the environment or the ``.env`` file.
+Nothing is hardcoded in the source; changes are made solely through the
+environment.
 """
 
 from __future__ import annotations
@@ -14,7 +14,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    """Anwendungsweite Einstellungen."""
+    """Application-wide settings."""
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -34,7 +34,7 @@ class Settings(BaseSettings):
     qdrant_port: int = 6333
     qdrant_collection: str = "documents"
 
-    # --- Embedding-Modell ---
+    # --- Embedding model ---
     embedding_model: str = "intfloat/multilingual-e5-large"
     vector_size: int = 1024
 
@@ -42,17 +42,17 @@ class Settings(BaseSettings):
     chunk_size: int = 512
     chunk_overlap: int = 64
 
-    # --- Suche ---
+    # --- Search ---
     search_oversampling: float = 2.0
 
-    # --- Flask-API ---
+    # --- Flask API ---
     api_host: str = "0.0.0.0"
     api_port: int = 5001
 
     @computed_field  # type: ignore[prop-decorator]
     @property
     def database_url(self) -> str:
-        """SQLAlchemy-Verbindungs-URL fuer PostgreSQL (psycopg2-Treiber)."""
+        """SQLAlchemy connection URL for PostgreSQL (psycopg2 driver)."""
         return (
             f"postgresql+psycopg2://{self.postgres_user}:{self.postgres_password}"
             f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
@@ -61,5 +61,5 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
-    """Liefert eine gecachte Settings-Instanz (Singleton)."""
+    """Return a cached Settings instance (singleton)."""
     return Settings()

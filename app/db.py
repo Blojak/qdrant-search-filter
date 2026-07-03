@@ -1,8 +1,8 @@
-"""SQLAlchemy-Engine, Session-Factory und Basisklasse.
+"""SQLAlchemy engine, session factory and declarative base.
 
-Stellt die zentrale ``Base`` (declarative), eine ``Engine`` sowie eine
-Session-Factory bereit. ``init_db`` legt die Tabellen fuer den PoC per
-``create_all`` an (Alembic ist bewusst out of scope).
+Provides the central declarative ``Base``, an ``Engine`` and a session
+factory. ``init_db`` creates the tables for the PoC via ``create_all``
+(Alembic is intentionally out of scope).
 """
 
 from __future__ import annotations
@@ -22,12 +22,12 @@ SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False
 
 
 class Base(DeclarativeBase):
-    """Gemeinsame declarative Basisklasse aller ORM-Modelle."""
+    """Shared declarative base class for all ORM models."""
 
 
 @contextmanager
 def session_scope() -> Iterator[Session]:
-    """Kontextmanager mit Commit/Rollback-Handling."""
+    """Context manager with commit/rollback handling."""
     session = SessionLocal()
     try:
         yield session
@@ -40,8 +40,8 @@ def session_scope() -> Iterator[Session]:
 
 
 def init_db() -> None:
-    """Legt alle Tabellen an (idempotent). Importiert die Modelle bewusst hier,
-    damit sie bei ``Base.metadata`` registriert sind."""
-    from app import models  # noqa: F401  (Registrierung der Mapper)
+    """Create all tables (idempotent). Models are imported here on purpose so
+    they are registered on ``Base.metadata``."""
+    from app import models  # noqa: F401  (register mappers)
 
     Base.metadata.create_all(bind=engine)

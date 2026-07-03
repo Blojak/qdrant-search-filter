@@ -1,9 +1,9 @@
-"""ORM-Modelle: ``Document`` und ``Chunk``.
+"""ORM models: ``Document`` and ``Chunk``.
 
-PostgreSQL ist die Single Source of Truth fuer alle Metadaten. Ein Dokument
-besitzt N Chunks; jeder Chunk entspricht genau einem Embedding bzw. einem
-Vektor in Qdrant. Die Metadaten sind bewusst in Kategorien gegliedert:
-technisch, deskriptiv, administrativ und flexibel (JSONB ``extra``).
+PostgreSQL is the single source of truth for all metadata. A document owns
+N chunks; each chunk corresponds to exactly one embedding / one vector in
+Qdrant. The metadata is deliberately grouped into categories: technical,
+descriptive, administrative and flexible (JSONB ``extra``).
 """
 
 from __future__ import annotations
@@ -29,9 +29,9 @@ from app.enums import Classification, DocType, Language
 
 
 def _enum_column(enum_cls: type, type_name: str) -> SAEnum:
-    """Erzeugt eine native PG-Enum-Spalte, die die Enum-*Werte* (nicht Namen)
-    persistiert – so ist die Postgres-Repraesentation identisch zum
-    denormalisierten Qdrant-Payload (z. B. ``de`` statt ``DE``)."""
+    """Create a native PG enum column that persists the enum *values* (not the
+    names), so the Postgres representation is identical to the denormalized
+    Qdrant payload (e.g. ``de`` instead of ``DE``)."""
     return SAEnum(
         enum_cls,
         name=type_name,
@@ -41,16 +41,16 @@ def _enum_column(enum_cls: type, type_name: str) -> SAEnum:
 
 
 class Document(Base):
-    """Ein Dokument als Traeger aller Metadaten (Wahrheit in Postgres)."""
+    """A document carrying all metadata (source of truth in Postgres)."""
 
     __tablename__ = "documents"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
 
-    # --- technisch ---
+    # --- technical ---
     content_hash: Mapped[str] = mapped_column(
         String(64), nullable=False, unique=True, index=True,
-        doc="sha256-Hash des Rohinhalts fuer Deduplizierung",
+        doc="sha256 hash of the raw content for deduplication",
     )
     filename: Mapped[str] = mapped_column(String(512), nullable=False)
     mime_type: Mapped[str] = mapped_column(String(128), nullable=False)
@@ -59,7 +59,7 @@ class Document(Base):
         DateTime(timezone=True), nullable=False, server_default=func.now(),
     )
 
-    # --- deskriptiv ---
+    # --- descriptive ---
     title: Mapped[str | None] = mapped_column(String(512), nullable=True)
     language: Mapped[Language] = mapped_column(
         _enum_column(Language, "language_enum"),
@@ -71,17 +71,17 @@ class Document(Base):
     )
     created_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True,
-        doc="Fachliches Dokumentdatum (nicht Ingestion-Zeitpunkt)",
+        doc="Functional document date (not the ingestion timestamp)",
     )
 
-    # --- administrativ ---
+    # --- administrative ---
     classification: Mapped[Classification] = mapped_column(
         _enum_column(Classification, "classification_enum"),
         nullable=False, default=Classification.INTERNAL, index=True,
     )
     source: Mapped[str | None] = mapped_column(String(256), nullable=True)
 
-    # --- flexibel / typspezifisch ---
+    # --- flexible / type-specific ---
     extra: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
 
     chunks: Mapped[list["Chunk"]] = relationship(
@@ -90,12 +90,12 @@ class Document(Base):
         order_by="Chunk.chunk_index",
     )
 
-    def __repr__(self) -> str:  # pragma: no cover - Debug-Hilfe
+    def __repr__(self) -> str:  # pragma: no cover - debug helper
         return f"<Document id={self.id} filename={self.filename!r}>"
 
 
 class Chunk(Base):
-    """Ein Textabschnitt eines Dokuments. Ein Chunk = ein Vektor in Qdrant."""
+    """A text segment of a document. One chunk = one vector in Qdrant."""
 
     __tablename__ = "chunks"
     __table_args__ = (
@@ -107,12 +107,12 @@ class Chunk(Base):
         ForeignKey("documents.id", ondelete="CASCADE"), nullable=False, index=True,
     )
     chunk_index: Mapped[int] = mapped_column(
-        Integer, nullable=False, doc="0-basierte Position innerhalb des Dokuments",
+        Integer, nullable=False, doc="0-based position within the document",
     )
     text: Mapped[str] = mapped_column(Text, nullable=False)
     char_count: Mapped[int] = mapped_column(Integer, nullable=False)
 
     document: Mapped["Document"] = relationship(back_populates="chunks")
 
-    def __repr__(self) -> str:  # pragma: no cover - Debug-Hilfe
+    def __repr__(self) -> str:  # pragma: no cover - debug helper
         return f"<Chunk id={self.id} doc={self.document_id} idx={self.chunk_index}>"

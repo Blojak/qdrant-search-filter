@@ -8,8 +8,8 @@ services:
       - "6334:6334"                   # gRPC
     volumes:
       - qdrant_data:/qdrant/storage
-    # Kein Container-Healthcheck: Qdrant-Image bringt keine garantierte Shell/curl
-    # mit. Erreichbarkeit wird vom Host gegen den REST-Port geprueft.
+    # No container healthcheck: the Qdrant image ships without a guaranteed
+    # shell/curl. Reachability is checked from the host against the REST port.
 
   postgres:
     image: postgres:17

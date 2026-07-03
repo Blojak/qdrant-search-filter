@@ -1,8 +1,8 @@
-"""Kontrollierte Vokabulare fuer filterbare Metadatenfelder.
+"""Controlled vocabularies for filterable metadata fields.
 
-Diese Enums bilden den erlaubten Wertebereich der Felder ``language``,
-``doc_type`` und ``classification`` ab. Freitext ist fuer diese Felder bewusst
-ausgeschlossen, damit Filter in Qdrant und Postgres verlaesslich funktionieren.
+These enums define the allowed value range of the fields ``language``,
+``doc_type`` and ``classification``. Free text is deliberately excluded for
+these fields so that filters in Qdrant and Postgres work reliably.
 """
 
 from __future__ import annotations
@@ -11,7 +11,7 @@ import enum
 
 
 class Language(str, enum.Enum):
-    """Sprache eines Dokuments (ISO-639-1, Teilmenge)."""
+    """Language of a document (ISO-639-1 subset)."""
 
     DE = "de"
     EN = "en"
@@ -22,7 +22,7 @@ class Language(str, enum.Enum):
 
 
 class DocType(str, enum.Enum):
-    """Grobe fachliche Dokumentart."""
+    """Coarse functional document type."""
 
     REPORT = "report"
     CONTRACT = "contract"
@@ -35,7 +35,7 @@ class DocType(str, enum.Enum):
 
 
 class Classification(str, enum.Enum):
-    """Administrative Vertraulichkeitsstufe."""
+    """Administrative confidentiality level."""
 
     PUBLIC = "public"
     INTERNAL = "internal"

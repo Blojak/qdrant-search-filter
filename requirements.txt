@@ -5,8 +5,8 @@ psycopg2-binary==2.9.10
 pydantic-settings==2.6.1
 Flask==3.1.0
 
-# Embeddings (lokal, mehrsprachig)
+# Embeddings (local, multilingual)
 sentence-transformers==3.3.1
 
-# Optionaler einfacher PDF-Text (out of scope fuer Kern-PoC, aber leichtgewichtig)
+# Optional simple PDF text (out of scope for the core PoC, but lightweight)
 pypdf==5.1.0
