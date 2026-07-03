@@ -1,9 +1,10 @@
 """Flask API: document ingestion and semantic search.
 
 Endpoints:
-    GET  /health           liveness probe
-    POST /documents        ingest a document (raw text or server-side file path)
-    POST /search           semantic search with optional metadata filters
+    GET    /health              liveness probe
+    POST   /documents           ingest a document (raw text or server-side path)
+    DELETE /documents/<id>      delete a document from Postgres and Qdrant
+    POST   /search              semantic search with optional metadata filters
 
 Slim JSON in / JSON out with basic validation and error handling.
 """
@@ -18,7 +19,7 @@ from flask import Flask, jsonify, request
 from app.config import get_settings
 from app.db import init_db
 from app.enums import Classification, DocType, Language
-from app.ingestion import DocumentMeta, ingest_file, ingest_text
+from app.ingestion import DocumentMeta, delete_document, ingest_file, ingest_text
 from app.search import SearchFilters, search
 from app.vectorstore import ensure_collection
 
@@ -113,6 +114,12 @@ def create_app() -> Flask:
             "deduplicated": result.deduplicated,
         }
         return jsonify(payload), (200 if result.deduplicated else 201)
+
+    @app.delete("/documents/<int:doc_id>")
+    def delete_document_endpoint(doc_id: int):
+        if not delete_document(doc_id):
+            raise ApiError(f"document {doc_id} not found", status=404)
+        return jsonify({"deleted": True, "document_id": doc_id})
 
     @app.post("/search")
     def post_search():

@@ -141,6 +141,17 @@ Response:
 }
 ```
 
+### Delete a document
+
+Removes the document and its chunks from Postgres and its vectors from Qdrant.
+
+```bash
+curl -s -X DELETE http://localhost:5001/documents/4
+```
+
+Response `200` (`{"deleted": true, "document_id": 4}`) or `404` if the id does
+not exist.
+
 ## Evaluating recall
 
 To measure retrieval quality, build a small labeled test set of

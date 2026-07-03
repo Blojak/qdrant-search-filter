@@ -181,3 +181,37 @@ def ingest_file(path: str | Path, meta: DocumentMeta | None = None) -> IngestRes
     else:
         meta.mime_type = mime_type
     return ingest_text(text, meta)
+
+
+def delete_document(doc_id: int) -> bool:
+    """Delete a document from both stores.
+
+    Returns ``True`` if the document existed and was removed, ``False`` if no
+    document with that id exists. Postgres is the source of truth, so it is
+    removed (and committed) first; the now-orphaned vectors are then dropped
+    from Qdrant.
+    """
+    settings = get_settings()
+    client = get_client()
+
+    with session_scope() as session:
+        doc = session.get(Document, doc_id)
+        if doc is None:
+            return False
+        session.delete(doc)  # cascade removes the document's chunks
+
+    # Postgres delete is committed at this point; drop the vectors in Qdrant.
+    client.delete(
+        collection_name=settings.qdrant_collection,
+        points_selector=qm.FilterSelector(
+            filter=qm.Filter(
+                must=[
+                    qm.FieldCondition(
+                        key=PAYLOAD_DOC_ID, match=qm.MatchValue(value=doc_id)
+                    )
+                ]
+            )
+        ),
+        wait=True,
+    )
+    return True
