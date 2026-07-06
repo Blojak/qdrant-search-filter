@@ -135,11 +135,30 @@ Response:
       "chunk_id": 42,
       "chunk_index": 0,
       "chunk_text": "The quarterly security report ...",
+      "start_char": 0,
+      "end_char": 176,
       "document": {"id": 2, "title": "Q1 2024 Security Report", "language": "en", "doc_type": "report", "...": "..."}
     }
   ]
 }
 ```
+
+`start_char`/`end_char` are the chunk's character offsets into the document
+body (see below) — use them to highlight the hit inside the full document.
+
+### Fetch a document (for highlighting)
+
+Returns the full metadata plus the source `body`. The invariant
+`body[start_char:end_char] == chunk_text` holds, so a client can render the
+`body` and highlight each hit's `[start_char, end_char)` span.
+
+```bash
+curl -s http://localhost:5001/documents/2
+```
+
+Response `200` with the document (incl. `body`), or `404` if the id does not
+exist. Documents ingested before this feature have `body: null` and chunks with
+`start_char`/`end_char` `null` — re-ingest them to populate the offsets.
 
 ### Delete a document
 

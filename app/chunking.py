@@ -2,6 +2,10 @@
 
 Splits text into fixed-size, overlapping segments (values from the config).
 Size is measured in characters – deliberately kept simple for the PoC.
+
+Each chunk carries its character offsets (``start``/``end``) into the exact
+text that was passed in, so ``text[start:end] == chunk.text``. Those offsets
+are what enables highlighting a hit inside the original document.
 """
 
 from __future__ import annotations
@@ -13,10 +17,12 @@ from app.config import get_settings
 
 @dataclass(frozen=True)
 class Chunk:
-    """A text segment with its 0-based position in the document."""
+    """A text segment with its 0-based index and character offsets."""
 
     index: int
     text: str
+    start: int  # inclusive char offset into the source text
+    end: int  # exclusive char offset into the source text
 
     @property
     def char_count(self) -> int:
@@ -30,6 +36,8 @@ def chunk_text(
 ) -> list[Chunk]:
     """Split ``text`` into overlapping chunks of fixed character length.
 
+    Leading/trailing whitespace of each window is trimmed, and the offsets are
+    adjusted accordingly so ``text[chunk.start:chunk.end] == chunk.text``.
     Empty / whitespace-only chunks are dropped. If the parameters are omitted,
     the values from the configuration are used.
     """
@@ -42,18 +50,23 @@ def chunk_text(
     if ovl < 0 or ovl >= size:
         raise ValueError("overlap must be >= 0 and < chunk_size")
 
-    normalized = text.strip()
-    if not normalized:
+    if not text.strip():
         return []
 
     step = size - ovl
     chunks: list[Chunk] = []
     idx = 0
-    for start in range(0, len(normalized), step):
-        piece = normalized[start : start + size].strip()
+    for window_start in range(0, len(text), step):
+        window = text[window_start : window_start + size]
+        lstripped = window.lstrip()
+        lead = len(window) - len(lstripped)  # trimmed leading whitespace
+        piece = lstripped.rstrip()
         if piece:
-            chunks.append(Chunk(index=idx, text=piece))
+            start = window_start + lead
+            chunks.append(
+                Chunk(index=idx, text=piece, start=start, end=start + len(piece))
+            )
             idx += 1
-        if start + size >= len(normalized):
+        if window_start + size >= len(text):
             break
     return chunks

@@ -46,6 +46,8 @@ class SearchHit:
     chunk_id: int
     chunk_index: int
     chunk_text: str
+    start_char: int | None  # offset into document body (for highlighting)
+    end_char: int | None
     document: dict
 
 
@@ -97,9 +99,13 @@ def _build_filter(filters: SearchFilters | None) -> qm.Filter | None:
     return qm.Filter(must=must) if must else None
 
 
-def _document_to_dict(doc: Document) -> dict:
-    """Serialize a document's metadata to a JSON-friendly dict."""
-    return {
+def _document_to_dict(doc: Document, include_body: bool = False) -> dict:
+    """Serialize a document's metadata to a JSON-friendly dict.
+
+    ``include_body`` adds the full source text (used by the document-detail
+    endpoint, but omitted from search results to keep them small).
+    """
+    data = {
         "id": doc.id,
         "filename": doc.filename,
         "title": doc.title,
@@ -113,6 +119,18 @@ def _document_to_dict(doc: Document) -> dict:
         "ingested_at": doc.ingested_at.isoformat() if doc.ingested_at else None,
         "extra": doc.extra,
     }
+    if include_body:
+        data["body"] = doc.body
+    return data
+
+
+def get_document(doc_id: int) -> dict | None:
+    """Load a single document incl. its full body, or ``None`` if not found."""
+    with session_scope() as session:
+        doc = session.get(Document, doc_id)
+        if doc is None:
+            return None
+        return _document_to_dict(doc, include_body=True)
 
 
 def search(
@@ -169,6 +187,8 @@ def search(
                     chunk_id=chunk.id,
                     chunk_index=chunk.chunk_index,
                     chunk_text=chunk.text,
+                    start_char=chunk.start_char,
+                    end_char=chunk.end_char,
                     document=doc_by_id[chunk.document_id],
                 )
             )

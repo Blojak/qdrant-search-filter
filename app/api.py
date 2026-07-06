@@ -3,6 +3,7 @@
 Endpoints:
     GET    /health              liveness probe
     POST   /documents           ingest a document (raw text or server-side path)
+    GET    /documents/<id>      fetch a document incl. full body (for rendering)
     DELETE /documents/<id>      delete a document from Postgres and Qdrant
     POST   /search              semantic search with optional metadata filters
 
@@ -20,7 +21,7 @@ from app.config import get_settings
 from app.db import init_db
 from app.enums import Classification, DocType, Language
 from app.ingestion import DocumentMeta, delete_document, ingest_file, ingest_text
-from app.search import SearchFilters, search
+from app.search import SearchFilters, get_document, search
 from app.vectorstore import ensure_collection
 
 
@@ -115,6 +116,13 @@ def create_app() -> Flask:
         }
         return jsonify(payload), (200 if result.deduplicated else 201)
 
+    @app.get("/documents/<int:doc_id>")
+    def get_document_endpoint(doc_id: int):
+        doc = get_document(doc_id)
+        if doc is None:
+            raise ApiError(f"document {doc_id} not found", status=404)
+        return jsonify(doc)
+
     @app.delete("/documents/<int:doc_id>")
     def delete_document_endpoint(doc_id: int):
         if not delete_document(doc_id):
@@ -153,6 +161,8 @@ def create_app() -> Flask:
                 "chunk_id": hit.chunk_id,
                 "chunk_index": hit.chunk_index,
                 "chunk_text": hit.chunk_text,
+                "start_char": hit.start_char,
+                "end_char": hit.end_char,
                 "document": hit.document,
             }
             for hit in hits

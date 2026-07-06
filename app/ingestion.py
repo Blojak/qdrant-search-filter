@@ -139,9 +139,16 @@ def ingest_text(content: str, meta: DocumentMeta) -> IngestResult:
             classification=meta.classification,
             source=meta.source,
             extra=meta.extra,
+            body=content,  # full text for highlighting; offsets index into this
         )
         doc.chunks = [
-            Chunk(chunk_index=c.index, text=c.text, char_count=c.char_count)
+            Chunk(
+                chunk_index=c.index,
+                text=c.text,
+                char_count=c.char_count,
+                start_char=c.start,
+                end_char=c.end,
+            )
             for c in chunks
         ]
         session.add(doc)

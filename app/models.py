@@ -84,6 +84,10 @@ class Document(Base):
     # --- flexible / type-specific ---
     extra: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
 
+    # Full source text, kept so hits can be highlighted inside the document.
+    # Nullable: documents ingested before this column existed have no body.
+    body: Mapped[str | None] = mapped_column(Text, nullable=True)
+
     chunks: Mapped[list["Chunk"]] = relationship(
         back_populates="document",
         cascade="all, delete-orphan",
@@ -111,6 +115,10 @@ class Chunk(Base):
     )
     text: Mapped[str] = mapped_column(Text, nullable=False)
     char_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    # Character offsets into Document.body (text[start:end] == chunk text).
+    # Nullable for chunks created before these columns existed.
+    start_char: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    end_char: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     document: Mapped["Document"] = relationship(back_populates="chunks")
 
