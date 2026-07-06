@@ -1,8 +1,8 @@
 """SQLAlchemy engine, session factory and declarative base.
 
 Provides the central declarative ``Base``, an ``Engine`` and a session
-factory. ``init_db`` creates the tables for the PoC via ``create_all``
-(Alembic is intentionally out of scope).
+factory. The database schema is managed by Alembic (run ``alembic upgrade
+head``); this module intentionally does not create tables itself.
 """
 
 from __future__ import annotations
@@ -37,11 +37,3 @@ def session_scope() -> Iterator[Session]:
         raise
     finally:
         session.close()
-
-
-def init_db() -> None:
-    """Create all tables (idempotent). Models are imported here on purpose so
-    they are registered on ``Base.metadata``."""
-    from app import models  # noqa: F401  (register mappers)
-
-    Base.metadata.create_all(bind=engine)

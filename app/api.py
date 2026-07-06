@@ -18,7 +18,6 @@ from typing import Any
 from flask import Flask, jsonify, request
 
 from app.config import get_settings
-from app.db import init_db
 from app.enums import Classification, DocType, Language
 from app.ingestion import DocumentMeta, delete_document, ingest_file, ingest_text
 from app.search import SearchFilters, get_document, search
@@ -78,9 +77,12 @@ def _parse_meta(body: dict) -> DocumentMeta:
 
 
 def create_app() -> Flask:
-    """Application factory. Ensures schema and collection exist on startup."""
+    """Application factory. Ensures the Qdrant collection exists on startup.
+
+    The Postgres schema is managed by Alembic (``alembic upgrade head``), not
+    created here.
+    """
     app = Flask(__name__)
-    init_db()
     ensure_collection()
 
     @app.errorhandler(ApiError)
